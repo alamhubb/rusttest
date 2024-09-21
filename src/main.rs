@@ -3,8 +3,6 @@ use std::env;
 
 
 
-
-
 fn main() -> std::io::Result<()> {
     // 打印当前工作目录
     let current_dir = env::current_dir()?;
