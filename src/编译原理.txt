@@ -34,3 +34,5 @@ rust 写一个js parser
 const a = 10,
 
 先用js写
+
+不要做parser相关的事了，这不是你现在这个阶段该做的事情
