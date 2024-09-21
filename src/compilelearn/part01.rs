@@ -5,6 +5,7 @@ enum DfaState {
     GT,
     GE,
     IntLiteral,
+    Keyword,
 }
 
 #[derive(Debug, PartialEq)]
@@ -66,6 +67,18 @@ fn tokenize(input: &str) -> Vec<Token> {
                 //如果为id，则符合要求不改变状态，继续加入
                 if is_alpha(ch) || is_digit(ch) {
                     token.text.push(ch);
+                } else {
+                    //不符合状态，阶段token，改变token状态
+                    tokens.push(token);
+                    token = Token { token_type: TokenType::Identifier, text: String::new() };
+                    state = init_token(&mut token, Some(ch));
+                }
+            }
+            DfaState::Keyword => {
+                //如果为id，则符合要求不改变状态，继续加入
+                if is_alpha(ch) || is_digit(ch) {
+                    token.text.push(ch);
+                    token.token_type = TokenType::Identifier
                 } else {
                     //不符合状态，阶段token，改变token状态
                     tokens.push(token);

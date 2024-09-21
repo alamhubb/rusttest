@@ -1,118 +1,52 @@
-#[derive(Debug, PartialEq)]
-enum DfaState {
-    Initial,
-    Id,
-    GT,
-    GE,
-    IntLiteral,
-}
-
-#[derive(Debug, PartialEq)]
-enum TokenType {
-    Identifier,
-    GT,
-    GE,
-    IntLiteral,
-}
+use std::str::Chars;
 
 #[derive(Debug)]
-struct Token {
-    token_type: TokenType,
-    text: String,
+enum Expr {
+    Num(i32),                  // 数字表达式
+    Mul(Box<Expr>, Box<Expr>),  // 乘法表达式
 }
 
-fn is_alpha(ch: char) -> bool {
-    ch.is_ascii_alphabetic()
+// 解析整个表达式，从乘法表达式开始
+fn parse_expression(chars: &mut Chars) -> Expr {
+    parse_multiplicative(chars)
 }
 
-fn is_digit(ch: char) -> bool {
-    ch.is_ascii_digit()
-}
+// 解析乘法表达式 (multiplicativeExpression)
+fn parse_multiplicative(chars: &mut Chars) -> Expr {
+    let mut left = parse_number(chars);  // 首先解析一个数字 (IntLiteral)
 
-fn init_token(token: &mut Token, ch: Option<char>) -> DfaState {
-    // 完成当前 token，重置状态
-    if let Some(c) = ch {
-        if is_alpha(c) {
-            token.token_type = TokenType::Identifier;
-            token.text.push(c);
-            return DfaState::Id;
-        } else if is_digit(c) {
-            token.token_type = TokenType::IntLiteral;
-            token.text.push(c);
-            return DfaState::IntLiteral;
-        } else if c == '>' {
-            token.token_type = TokenType::GT;
-            token.text.push(c);
-            return DfaState::GT;
-        }
-    }
-    DfaState::Initial
-}
-
-fn tokenize(input: &str) -> Vec<Token> {
-    let mut tokens = Vec::new();
-    //状态设置为初始
-    let mut state = DfaState::Initial;
-    // 这里初始化可以避免在
-    let mut token = Token { token_type: TokenType::Identifier, text: String::new() };
-
-    for ch in input.chars() {
-        match state {
-            //如果为初始，则根据第一个字母改编为其他状态，并将文字加入
-            DfaState::Initial => {
-                state = init_token(&mut token, Some(ch));
-            }
-            DfaState::Id => {
-                //如果为id，则符合要求不改变状态，继续加入
-                if is_alpha(ch) || is_digit(ch) {
-                    token.text.push(ch);
-                } else {
-                    //不符合状态，阶段token，改变token状态
-                    tokens.push(token);
-                    token = Token { token_type: TokenType::Identifier, text: String::new() };
-                    state = init_token(&mut token, Some(ch));
-                }
-            }
-            DfaState::GT => {
-                if ch == '=' {
-                    token.token_type = TokenType::GE;
-                    token.text.push(ch);
-                    state = DfaState::GE;
-                } else {
-                    tokens.push(token);
-                    token = Token { token_type: TokenType::Identifier, text: String::new() };
-                    state = init_token(&mut token, Some(ch));
-                }
-            }
-            DfaState::GE => {
-                tokens.push(token);
-                token = Token { token_type: TokenType::Identifier, text: String::new() };
-                state = init_token(&mut token, Some(ch));
-            }
-            DfaState::IntLiteral => {
-                if is_digit(ch) {
-                    token.text.push(ch);
-                } else {
-                    tokens.push(token);
-                    token = Token { token_type: TokenType::Identifier, text: String::new() };
-                    state = init_token(&mut token, Some(ch));
-                }
-            }
+    while let Some(ch) = chars.clone().next() {
+        if ch == '*' {
+            chars.next();  // 跳过 '*'
+            let right = parse_number(chars);  // 解析右边的数字 (IntLiteral)
+            left = Expr::Mul(Box::new(left), Box::new(right));  // 构建乘法表达式
+        } else {
+            break;
         }
     }
 
-    if !token.text.is_empty() {
-        tokens.push(token);
+    left
+}
+
+// 解析整数字面量 (IntLiteral)
+fn parse_number(chars: &mut Chars) -> Expr {
+    let mut num = 0;
+    while let Some(ch) = chars.clone().next() {
+        if ch.is_digit(10) {
+            num = num * 10 + ch.to_digit(10).unwrap() as i32;  // 将字符转为数字
+            chars.next();  // 消耗当前字符
+        } else {
+            break;
+        }
     }
 
-    tokens
+    Expr::Num(num)  // 返回一个数字表达式
 }
 
 fn main() {
-    let input = "abc 123 >= 456";
-    let tokens = tokenize(input);
+    let input = "2*3*4";  // 示例表达式
+    let mut chars = input.chars();
+    let expr = parse_expression(&mut chars);  // 解析输入的表达式
 
-    for token in tokens {
-        println!("{:?}", token);
-    }
+    println!("{:?}", expr);  // 输出解析结果
 }
