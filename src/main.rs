@@ -51,18 +51,23 @@ fn init_token(token: &mut Token, ch: Option<char>) -> DfaState {
 
 fn tokenize(input: &str) -> Vec<Token> {
     let mut tokens = Vec::new();
+    //状态设置为初始
     let mut state = DfaState::Initial;
-    let mut token = Token { token_type: TokenType::Identifier, text: String::new() };
+    // 其他语言为null，rust 必须初始化
+    let mut token = Option<Token>::None;
 
     for ch in input.chars() {
         match state {
+            //如果为初始，则根据第一个字母改编为其他状态，并将文字加入
             DfaState::Initial => {
                 state = init_token(&mut token, Some(ch));
             }
             DfaState::Id => {
+                //如果为id，则符合要求不改变状态，继续加入
                 if is_alpha(ch) || is_digit(ch) {
                     token.text.push(ch);
                 } else {
+                    //不符合状态，阶段token，改变token状态
                     tokens.push(token);
                     token = Token { token_type: TokenType::Identifier, text: String::new() };
                     state = init_token(&mut token, Some(ch));
