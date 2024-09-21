@@ -28,6 +28,6 @@ function isDigit(char) {
 
 // 测试
 let input = '2*3*4'.split(''); // 输入的字符数组
-let expr = parseMultiplicativeTail(input, parseNumber(input));
+let expr = parseMultiplicative(input, parseNumber(input));
 
 console.log(JSON.stringify(expr, null, 2));
